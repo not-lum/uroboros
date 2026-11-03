@@ -148,7 +148,8 @@ static ssize_t dlist_find_free(DList *dlist) {
 }
 
 
-DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value) {
+DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value,
+                               ssize_t *real_ind) {
     assert(dlist != NULL);
     assert(ind < dlist->capacity);
 
@@ -173,6 +174,9 @@ DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value) {
 
         dlist->size++; // TODO: add dlist_resize
 
+        if (real_ind != NULL)
+            *real_ind = new_ind;
+
         ASSERT_OK(dlist);
 
         return DLIST_OK;
@@ -196,6 +200,9 @@ DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value) {
         dlist->tail = new_ind;
 
     dlist->size++;
+
+    if (real_ind != NULL)
+        *real_ind = new_ind;
 
     ASSERT_OK(dlist);
 

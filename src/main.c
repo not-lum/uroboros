@@ -16,19 +16,19 @@ int main() {
     DListStatus status = DLIST_CREATE_DBG(&dlist, 4, _dbg_log_dir);
 
     // TODO: rename to Uroboros
-    status = dlist_insert_after(&dlist, 0, 67);
+    status = dlist_insert_after(&dlist, 0, 67, NULL);
     fprintf(stderr, "dlist added first element\n");
     // dlist_dump(&dlist);
     
-    status = dlist_insert_after(&dlist, 0, 53);
+    status = dlist_insert_after(&dlist, 0, 53, NULL);
     fprintf(stderr, "dlist added second element\n");
     // dlist_dump(&dlist);
 
-    status = dlist_insert_after(&dlist, 1, 189);
+    status = dlist_insert_after(&dlist, 1, 189, NULL);
     fprintf(stderr, "dlist added third element\n");
     // dlist_dump(&dlist);
 
-    status = dlist_insert_after(&dlist, 1, 29);
+    status = dlist_insert_after(&dlist, 1, 29, NULL);
     fprintf(stderr, "dlist added element between second and third\n");
     // dlist_dump(&dlist);
 

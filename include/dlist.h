@@ -33,7 +33,7 @@ typedef struct {
 
     ON_DEBUG(
     const char *_dbg_logdir;
-    FILE *_dbg_logfile; // TODO: remove bufferisation
+    FILE *_dbg_logfile;
     size_t _dbg_log_counter;
     )
 } DList;
@@ -60,5 +60,5 @@ DListStatus dlist_dump(DList *dlist);
 DListStatus dlist_create(DList *dlist, ssize_t capacity
                          ON_DEBUG(, const char *));
 DListStatus dlist_destroy(DList *dlist);
-DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value);
+DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value, ssize_t *);
 DListStatus dlist_delete(DList *dlist, ssize_t ind);
