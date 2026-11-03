@@ -1,13 +1,11 @@
-#include "include/dot_api.h"
-#include "include/dlist.h"
-#include "include/dot_theme.h"
-#include "include/dlist.h"
+#include "../include/dot_api.h"
+#include "../include/dlist.h"
 
 #include <stdio.h>
 #include <assert.h>
 
 
-void init_node(FILE *dot_file, Node *node, size_t ind) {
+void init_node(FILE *dot_file, Node *node, ssize_t ind) {
     assert(dot_file != NULL);
     assert(node != NULL);
 
@@ -27,7 +25,7 @@ void init_node(FILE *dot_file, Node *node, size_t ind) {
 }
 
 
-void highlight_head_and_tail(FILE *dot_file, size_t head, size_t tail) {
+void highlight_head_and_tail(FILE *dot_file, ssize_t head, ssize_t tail) {
     assert(dot_file != NULL);
 
     // TODO: think about copypaste here
@@ -55,7 +53,7 @@ void highlight_head_and_tail(FILE *dot_file, size_t head, size_t tail) {
 }
 
 void connect_nodes(FILE *dot_file,
-                   size_t first, size_t second,
+                   ssize_t first, ssize_t second,
                    ArrowStyle *style) {
     assert(dot_file != NULL);
     assert(style != NULL);
@@ -64,7 +62,7 @@ void connect_nodes(FILE *dot_file,
             first, second, style->style, style->weight, style->dir, style->color);
 }
 
-void glue_nodes(FILE *dot_file, size_t first, size_t second) {
+void glue_nodes(FILE *dot_file, ssize_t first, ssize_t second) {
     assert(dot_file != NULL);
 
     ArrowStyle style = {
@@ -76,7 +74,7 @@ void glue_nodes(FILE *dot_file, size_t first, size_t second) {
     connect_nodes(dot_file, first, second, &style);
 }
 
-void biconnect_nodes(FILE *dot_file, size_t first, size_t second) {
+void biconnect_nodes(FILE *dot_file, ssize_t first, ssize_t second) {
     assert(dot_file != NULL);
 
     ArrowStyle style = {
@@ -88,7 +86,7 @@ void biconnect_nodes(FILE *dot_file, size_t first, size_t second) {
     connect_nodes(dot_file, first, second, &style);   
 }
 
-void connect_nodes_error(FILE *dot_file, size_t first, size_t second) {
+void connect_nodes_error(FILE *dot_file, ssize_t first, ssize_t second) {
     assert(dot_file != NULL);
 
     ArrowStyle style = {
@@ -119,9 +117,9 @@ void intertwine_nodes(FILE *dot_file, DList *dlist) {
     assert(dot_file != NULL);
     assert(dlist != NULL);
 
-    for (size_t i = 0; i < dlist->capacity; i++) {
-        size_t node_prev = dlist->data[i].prev;
-        size_t node_next = dlist->data[i].next;
+    for (ssize_t i = 0; i < dlist->capacity; i++) {
+        ssize_t node_prev = dlist->data[i].prev;
+        ssize_t node_next = dlist->data[i].next;
 
         init_node(dot_file, &dlist->data[i], i);
 
@@ -135,6 +133,7 @@ void intertwine_nodes(FILE *dot_file, DList *dlist) {
                 connect_nodes_error(dot_file, i, node_prev);
         }
 
+        // TODO: add check connections on mutuality
         // if (node_next != DLIST_BAD_ELEM)
         //     connect_nodes(dot_file, i, node_next, "bold", 5);
     }

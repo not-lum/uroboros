@@ -1,5 +1,5 @@
-#include "include/dlist.h"
-#include "include/dlist_dump.h"
+#include "../include/dlist.h"
+#include "../include/dlist_dump.h"
 
 #include <linux/limits.h>
 #include <stdio.h>
@@ -9,16 +9,11 @@
 
 ON_DEBUG(
 #define ASSERT_OK(dlist) do { \
-    /* TODO: dump to dot */ \
     DListStatus status = dlist_verify((dlist)); \
-    char msg[64] = {}; \
-    snprintf(msg, 64, "Called from '%s'", __func__); \
-    \
-    dlist_dump_to_html((dlist), status, msg); \
+    dlist_dump_to_html((dlist), status, __func__, "Internal call"); \
     assert(status == DLIST_OK);  \
 } while(0)
 )
-
 
 const char *dlist_error_str(DListStatus status) {
     switch (status) {
@@ -44,17 +39,17 @@ const char *dlist_error_str(DListStatus status) {
             return "dlist size is bigger than its capacity";
         case DLIST_CANNOT_OPEN_DBG_LOG_FILE:
             return "cannot open debug log file";
-        case DLIST_CANNOT_GEN_LOG_FILENAME:
-            return "cannot generate filename for logging";
         case DLIST_CANNOT_DELETE_UNUSED:
             return "attempted to delete unused element";
+        case DLIST_CANNOT_INIT_LOGS:
+            return "cannot init logging system";
         default:
             return "unknown dlist error";
 
     }
 }
 
-DListStatus dlist_create(DList *dlist, size_t capacity
+DListStatus dlist_create(DList *dlist, ssize_t capacity
                          ON_DEBUG(, const char *_dbg_logdir)) {
     assert(dlist != NULL);
 
@@ -64,23 +59,16 @@ DListStatus dlist_create(DList *dlist, size_t capacity
     dlist->size = 0;
     dlist->capacity = capacity;
     
-    for (size_t i = 0; i < capacity; i++) {
+    for (ssize_t i = 0; i < capacity; i++) {
         dlist->data[i].prev = DLIST_BAD_ELEM;
         dlist->data[i].next = DLIST_BAD_ELEM;
     }
 
     ON_DEBUG(
-
     dlist->_dbg_logdir = _dbg_logdir;
 
-    char log_filename[64] = {};
-    if (gen_log_filename(dlist, "html", log_filename, 64) != DUMP_OK)
-        return DLIST_CANNOT_GEN_LOG_FILENAME;
-
-    dlist->_dbg_logfile = fopen(log_filename, "w");
-    if (dlist->_dbg_logfile == NULL)
-        return DLIST_CANNOT_OPEN_DBG_LOG_FILE;
-
+    if (init_logs(dlist) != DUMP_OK)
+        return DLIST_CANNOT_INIT_LOGS;
     )
 
     ASSERT_OK(dlist);
@@ -89,12 +77,12 @@ DListStatus dlist_create(DList *dlist, size_t capacity
 }
 
 static DListStatus dlist_verify_linking(DList *dlist) {
-    for (size_t i = 0; i < dlist->capacity; i++) {
+    for (ssize_t i = 0; i < dlist->capacity; i++) {
         if (!dlist->data[i].used)
             continue;
 
-        size_t node_prev = dlist->data[i].prev;
-        size_t node_next = dlist->data[i].next;
+        ssize_t node_prev = dlist->data[i].prev;
+        ssize_t node_next = dlist->data[i].next;
     
         if (node_prev != DLIST_BAD_ELEM) {
             if (node_prev >= dlist->capacity)
@@ -147,23 +135,10 @@ DListStatus dlist_destroy(DList *dlist) {
     return DLIST_OK;
 }
 
-static size_t dlist_node_at(DList *dlist, size_t ind) {
-    assert(dlist != NULL);
-    
-    size_t curr_ind = dlist->head;
-
-    for (size_t i = 0; i < ind; i++) {
-        curr_ind = dlist->data[curr_ind].next; // TODO: handle when curr_ind is DLIST_BAD_ELEM
-    }
-
-    return curr_ind;
-}
-
-
-static size_t dlist_find_free(DList *dlist) {
+static ssize_t dlist_find_free(DList *dlist) {
     assert(dlist != NULL);
 
-    for (size_t i = 0; i < dlist->capacity; i++) {
+    for (ssize_t i = 0; i < dlist->capacity; i++) {
         if (!dlist->data[i].used) {
             return i;
         }
@@ -173,7 +148,7 @@ static size_t dlist_find_free(DList *dlist) {
 }
 
 
-DListStatus dlist_insert_after(DList *dlist, size_t ind, dlist_elem_t value) {
+DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value) {
     assert(dlist != NULL);
     assert(ind < dlist->capacity);
 
@@ -182,7 +157,7 @@ DListStatus dlist_insert_after(DList *dlist, size_t ind, dlist_elem_t value) {
     if (dlist->size == 0 && ind != 0)
         return DLIST_INDEX_ERROR;
 
-    size_t new_ind = dlist_find_free(dlist);
+    ssize_t new_ind = dlist_find_free(dlist);
     if (ind == DLIST_BAD_ELEM)
         return DLIST_IS_FULL;
 
@@ -204,7 +179,7 @@ DListStatus dlist_insert_after(DList *dlist, size_t ind, dlist_elem_t value) {
     }
 
     // size_t real_ind = dlist_node_at(dlist, ind);
-    size_t right = dlist->data[ind].next;
+    ssize_t right = dlist->data[ind].next;
     if (right != DLIST_BAD_ELEM)
         dlist->data[right].prev = new_ind;
 
@@ -227,7 +202,7 @@ DListStatus dlist_insert_after(DList *dlist, size_t ind, dlist_elem_t value) {
     return DLIST_OK;
 }
 
-DListStatus dlist_delete(DList *dlist, size_t ind) {
+DListStatus dlist_delete(DList *dlist, ssize_t ind) {
     assert(dlist != NULL);
 
     ASSERT_OK(dlist);
@@ -237,8 +212,8 @@ DListStatus dlist_delete(DList *dlist, size_t ind) {
 
     // size_t real_ind = dlist_node_at(dlist, ind);
 
-    size_t left = dlist->data[ind].prev;
-    size_t right = dlist->data[ind].next;
+    ssize_t left = dlist->data[ind].prev;
+    ssize_t right = dlist->data[ind].next;
 
     if (left != DLIST_BAD_ELEM)
         dlist->data[left].next = right;
@@ -254,7 +229,6 @@ DListStatus dlist_delete(DList *dlist, size_t ind) {
     dlist->data[ind].value = 0;
     dlist->data[ind].prev = DLIST_BAD_ELEM; // TODO: rename to something like DLIST_POISON or DLIST_NONE
     dlist->data[ind].next = DLIST_BAD_ELEM;
-
 
     dlist->size--;
 

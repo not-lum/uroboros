@@ -1,14 +1,19 @@
-#include "include/dlist.h"
-#include "include/dlist_dump.h"
+#include "../include/dlist.h"
+#include "../include/dlist_dump.h"
 
 
 #define DOT_FILE "/tmp/dot_test.dot"
 #define OUT_FILE "./logs/img/img.png"
+#define LOGDIR "./logs"
 
 int main() {
     DList dlist = {};
-    DListStatus status = dlist_create(&dlist, 4
-                                      ON_DEBUG(, "./logs"));
+    ON_DEBUG(
+    char _dbg_log_dir[128] = {};
+    gen_dbg_dirname(LOGDIR, _dbg_log_dir, 128); 
+    )
+
+    DListStatus status = DLIST_CREATE_DBG(&dlist, 4, _dbg_log_dir);
 
     // TODO: rename to Uroboros
     status = dlist_insert_after(&dlist, 0, 67);

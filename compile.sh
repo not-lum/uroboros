@@ -1,1 +1,1 @@
-gcc -g -O0 -Wall -Wextra -fsanitize=address main.c dlist.c dlist_dump.c dot_api.c
+gcc -g -O0 -Wall -Wextra -fsanitize=address src/main.c src/dlist.c src/dlist_dump.c src/dot_api.c
