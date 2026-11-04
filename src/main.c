@@ -18,25 +18,21 @@ int main() {
     // TODO: rename to Uroboros
     status = dlist_insert_after(&dlist, 0, 67, NULL);
     fprintf(stderr, "dlist added first element\n");
-    // dlist_dump(&dlist);
-    
+
     status = dlist_insert_after(&dlist, 0, 53, NULL);
     fprintf(stderr, "dlist added second element\n");
-    // dlist_dump(&dlist);
 
     status = dlist_insert_after(&dlist, 1, 189, NULL);
     fprintf(stderr, "dlist added third element\n");
-    // dlist_dump(&dlist);
 
     status = dlist_insert_after(&dlist, 1, 29, NULL);
     fprintf(stderr, "dlist added element between second and third\n");
-    // dlist_dump(&dlist);
+
+    dlist.data[3].prev = -121;
 
     status = dlist_delete(&dlist, 2);
     fprintf(stderr, "dlist deleted third element\n");
-    // dlist_dump(&dlist);
 
-    // dlist_to_dot(&dlist, DOT_FILE, OUT_FILE);
 
     dlist_destroy(&dlist);
     return 0;

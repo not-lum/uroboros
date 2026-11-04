@@ -14,22 +14,19 @@
 #endif
 
 #define DLIST_BAD_ELEM (ssize_t)-1
-typedef int dlist_elem_t;
+typedef ssize_t dlist_elem_t;
 
 typedef struct {
     ssize_t prev;
     dlist_elem_t value;
     ssize_t next;
-
-    bool used;
 } Node;
 
 typedef struct {
-    ssize_t head;
-    ssize_t tail;
     Node *data;
     ssize_t size;
     ssize_t capacity;
+    ssize_t free_head;
 
     ON_DEBUG(
     const char *_dbg_logdir;
@@ -51,14 +48,40 @@ typedef enum {
     DLIST_NEXT_ELEMENT_DOESNT_LINK_BACK,
     DLIST_CANNOT_OPEN_DBG_LOG_FILE,
     DLIST_CANNOT_DELETE_UNUSED,
-    DLIST_CANNOT_INIT_LOGS
+    DLIST_CANNOT_INIT_LOGS,
+    DLIST_ATTEMPTED_TO_DELETE_SERVICE_ELEM,
+    DLIST_SIZE_LESS_THAN_ZERO,
+    DLIST_CAPACITY_LESS_THAN_ZERO,
+    DLIST_PREV_BAD_VALUE,
+    DLIST_NEXT_BAD_VALUE,
+    DLIST_FREE_HEAD_LESS_THAN_ZERO,
+    DLIST_ALLOC_FAIL
 } DListStatus;
 
+typedef enum {
+    NEXT,
+    PREV,
+} DListField;
+
+typedef struct {
+    DListStatus status;
+    ssize_t node;
+    ssize_t related;
+    DListField field;
+} DListErrorInfo;
+
 const char *dlist_error_str(DListStatus status);
-DListStatus dlist_verify(DList *);
+ssize_t dlist_free_head(DList *);
+ssize_t dlist_head(DList *);
+ssize_t dlist_tail(DList *);
 DListStatus dlist_dump(DList *dlist);
 DListStatus dlist_create(DList *dlist, ssize_t capacity
                          ON_DEBUG(, const char *));
 DListStatus dlist_destroy(DList *dlist);
 DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value, ssize_t *);
 DListStatus dlist_delete(DList *dlist, ssize_t ind);
+
+DListStatus dlist_verify(DList *);
+DListStatus dlist_verify_fields(DList *);
+DListStatus dlist_verify_prev(DList *, ssize_t);
+DListStatus dlist_verify_next(DList *, ssize_t);

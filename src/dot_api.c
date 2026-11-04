@@ -5,110 +5,153 @@
 #include <assert.h>
 
 
-void init_node(FILE *dot_file, Node *node, ssize_t ind) {
+void init_node(FILE *dot_file, DList *dlist, ssize_t ind) {
     assert(dot_file != NULL);
-    assert(node != NULL);
+    assert(dlist != NULL);
+
+    Node node = dlist->data[ind];
 
     const char *fillcolor = DOT_NODE_FILLCOLOR;
-    if (!node->used)
-        fillcolor = DOT_UNUSED_NODE_FILLCOLOR;
 
-    fprintf(dot_file, "{ rank=same; node%zi; ind_node%zi; }", ind, ind);
+    if (dlist_verify_prev(dlist, ind) != DLIST_OK ||
+        dlist_verify_next(dlist, ind) != DLIST_OK)
+        fillcolor = DOT_ERROR_NODE_FILLCOLOR;
+    else if (ind == 0)
+        fillcolor = DOT_SERVICE_NODE_FILLCOLOR;
+    else if (node.prev == DLIST_BAD_ELEM)
+        fillcolor = DOT_FREE_NODE_FILLCOLOR;
+
+    fprintf(dot_file, "{ rank=same; node%zi; ind_node%zi; }\n", ind, ind);
     fprintf(dot_file,
-            "node%zi[label=\"prev: %zi | value: %d | next: %zi\", " 
+            "node%zi[label=\"prev: %zi | value: %zi | next: %zi\", " 
             "fillcolor=\"%s\"];\n",
-            ind, node->prev, node->value, node->next, fillcolor);
-    fprintf(dot_file, "ind_node%zi[label=\"[%zi]\"];\n", ind, ind);
+            ind, node.prev, node.value, node.next, fillcolor);
+    fprintf(dot_file, "ind_node%zi[label=\"[%zi]\", fillcolor=\"%s\", fontname=\"monospace bold\"];\n",
+            ind, ind, fillcolor);
     
-    // TODO: kinda want to do this via connect_nodes
     fprintf(dot_file, "node%zi->ind_node%zi[dir=none];\n", ind, ind); 
 }
 
 
+void add_meta_node(FILE *dot_file,
+                   ssize_t ind, MetaNode meta_node) {
+    assert(dot_file != NULL);
+
+    fprintf(dot_file,
+            "{ rank=same; node%zi; %s; }\n"
+            "%s[label=\"%s\", "
+            "fillcolor=\"%s\", "
+            "];\n"
+            "%s->node%zi[dir=none];\n",
+            ind, meta_node.name, meta_node.name,
+            meta_node.label, meta_node.fillcolor,
+            meta_node.name, ind);
+}
+
 void highlight_head_and_tail(FILE *dot_file, ssize_t head, ssize_t tail) {
     assert(dot_file != NULL);
 
-    // TODO: think about copypaste here
+    if (head == tail) {
+        MetaNode meta_node = {
+            .name      = "head_tail",
+            .label     = "HEAD | TAIL",
+            .fillcolor = DOT_HEAD_FILLCOLOR
+        };
+        add_meta_node(dot_file, head, meta_node);
+    } else {
+        MetaNode meta_head = {
+            .name      = "head",
+            .label     = "HEAD",
+            .fillcolor = DOT_HEAD_FILLCOLOR
+        };
+        add_meta_node(dot_file, head, meta_head);
 
-    if (head != DLIST_BAD_ELEM) {
-        // fprintf(dot_file, "{ rank=same; node%zi; head; }\n", head);
-        // fputs("head[fillcolor=\"" DOT_HEAD_FILLCOLOR "\"];\n", dot_file);
-        // fprintf(dot_file, "head->node%zi;\n", head);
-        fprintf(dot_file,
-                "ind_node%zi[label=\"[%zi]\\nHEAD\", "
-                "fillcolor=\""DOT_HEAD_FILLCOLOR "\"];\n",
-                head, head);
+        MetaNode meta_tail = {
+            .name      = "tail",
+            .label     = "TAIL",
+            .fillcolor = DOT_TAIL_FILLCOLOR
+        };
+        add_meta_node(dot_file, tail, meta_tail);
     }
+}
 
-    if (tail != DLIST_BAD_ELEM) {
-        fprintf(dot_file,
-                "ind_node%zi[label=\"[%zi]\\nTAIL\", "
-                "fillcolor=\""DOT_TAIL_FILLCOLOR "\"];\n",
-                tail, tail);
+void highlight_free_head(FILE *dot_file, ssize_t free_ind) {
+    assert(dot_file != NULL);
 
-        // fprintf(dot_file, "{ rank=same; node%zi; tail; }\n", tail);
-        // fputs("tail[fillcolor=\"" DOT_TAIL_FILLCOLOR "\"];\n", dot_file);
-        // fprintf(dot_file, "tail->node%zi;\n", tail);
-    }
+    if (free_ind <= 0)
+        return;
+
+    MetaNode meta_free = {
+        .name = "free_head",
+        .label = "FREE",
+        .fillcolor = DOT_FREE_HEAD_FILLCOLOR
+    };
+    add_meta_node(dot_file, free_ind, meta_free);
 }
 
 void connect_nodes(FILE *dot_file,
                    ssize_t first, ssize_t second,
-                   ArrowStyle *style) {
+                   ArrowStyle style) {
     assert(dot_file != NULL);
-    assert(style != NULL);
 
-    fprintf(dot_file, "node%zi->node%zi[style=%s, weight=%zi, dir=%s, color=%s];\n",
-            first, second, style->style, style->weight, style->dir, style->color);
+    // fprintf(dot_file, "node%zi->node%zi[style=%s, weight=%zi, dir=%s, color=\"%s\"];\n",
+    //         first, second, style.style, style.weight, style.dir, style.color);
+    
+    fprintf(dot_file, "node%zi->node%zi[", first, second);
+    if (style.weight > 0)    fprintf(dot_file, "weight=%zu, ", style.weight);
+    if (style.style != NULL) fprintf(dot_file, "style=%s, ", style.style);
+    if (style.dir != NULL)   fprintf(dot_file, "dir=%s, ", style.dir);
+    if (style.color != NULL) fprintf(dot_file, "color=\"%s\", ", style.color);
+
+    fprintf(dot_file, "];\n");
 }
 
 void glue_nodes(FILE *dot_file, ssize_t first, ssize_t second) {
     assert(dot_file != NULL);
 
     ArrowStyle style = {
-        .style = "invis",
+        .style  = "invis",
         .weight = GLUE_ARROW_WEIGHT,
-        .dir = "forward",
-        .color = "white" // TODO: if field is null don't write it
     };
-    connect_nodes(dot_file, first, second, &style);
+    connect_nodes(dot_file, first, second, style);
 }
 
 void biconnect_nodes(FILE *dot_file, ssize_t first, ssize_t second) {
     assert(dot_file != NULL);
 
     ArrowStyle style = {
-        .style = "filled",
-        .weight = DEFAULT_ARROW_WEIGHT,
-        .dir = "both",
-        .color = "black",
+        .style  = BICONNECT_ARROW_STYLE,
+        .dir    = "both",
+        .color  = BICONNECT_ARROW_COLOR,
     };
-    connect_nodes(dot_file, first, second, &style);   
+    connect_nodes(dot_file, first, second, style);   
 }
 
 void connect_nodes_error(FILE *dot_file, ssize_t first, ssize_t second) {
     assert(dot_file != NULL);
 
     ArrowStyle style = {
-        .style = "bold",
-        .weight = DEFAULT_ARROW_WEIGHT,
-        .dir = "both",
-        .color = "#FFC0C0"
+        .style  = ERROR_ARROW_STYLE,
+        .color  = ERROR_ARROW_COLOR
     };
-    connect_nodes(dot_file, first, second, &style);   
+    connect_nodes(dot_file, first, second, style);   
 }
 
 void set_default_style(FILE *dot_file) {
     assert(dot_file != NULL);
 
-    fputs("rankdir="     DOT_RANKDIR        ";\n"
-          "splines="     DOT_SPLINES        ";\n"
-          "nodesep="     DOT_NODESEP        ";\n"
-          "node[shape="  DOT_NODE_SHAPE     ", "
-          "style=\""     DOT_NODE_STYLE     "\", "
-          "fillcolor=\"" DOT_NODE_FILLCOLOR "\", "
-          "color=\""     DOT_NODE_COLOR     "\", "
-          "fontname=\""  DOT_FONTNAME       "\"];\n"
+    fputs("rankdir="     DOT_RANKDIR          ";\n"
+          "splines="     DOT_SPLINES          ";\n"
+          "nodesep="     DOT_NODESEP          ";\n"
+          "edge["
+          "weight="      DEFAULT_ARROW_WEIGHT ", "
+          "];\n"
+          "node["
+          "shape="       DOT_NODE_SHAPE       ", "
+          "style=\""     DOT_NODE_STYLE       "\", "
+          "fillcolor=\"" DOT_NODE_FILLCOLOR   "\", "
+          "color=\""     DOT_NODE_COLOR       "\", "
+          "fontname=\""  DOT_FONTNAME         "\"];\n"
           , dot_file);
 }
 
@@ -121,21 +164,22 @@ void intertwine_nodes(FILE *dot_file, DList *dlist) {
         ssize_t node_prev = dlist->data[i].prev;
         ssize_t node_next = dlist->data[i].next;
 
-        init_node(dot_file, &dlist->data[i], i);
+        init_node(dot_file, dlist, i);
 
         if (i != dlist->capacity - 1)
             glue_nodes(dot_file, i, i + 1);
-
-        if (node_prev != DLIST_BAD_ELEM) {
+    
+        if (node_prev >= 0) {
             if (dlist->data[node_prev].next == i)
                 biconnect_nodes(dot_file, i, node_prev);
             else
                 connect_nodes_error(dot_file, i, node_prev);
         }
 
-        // TODO: add check connections on mutuality
-        // if (node_next != DLIST_BAD_ELEM)
-        //     connect_nodes(dot_file, i, node_next, "bold", 5);
+        // TODO: add 
+        if (node_next >= 0 && node_prev != DLIST_BAD_ELEM)
+            if (dlist->data[node_next].prev != i)
+                connect_nodes_error(dot_file, i, node_next);
     }
 }
 

@@ -2,14 +2,23 @@
 #define DOT_NODE_SHAPE                "Mrecord"
 #define DOT_NODE_STYLE                "filled"
 #define DOT_NODE_FILLCOLOR            "#C0C0FF"
-#define DOT_UNUSED_NODE_FILLCOLOR     "#C0C0C0"
+#define DOT_FREE_NODE_FILLCOLOR       "#C0C0C0"
+#define DOT_SERVICE_NODE_FILLCOLOR    "#C0DDC0"
+#define DOT_ERROR_NODE_FILLCOLOR      "#FF3030"
 #define DOT_NODE_COLOR                "#000000"
 #define DOT_FONTNAME                  "monospace"
 #define DOT_SPLINES                   "ortho"
-#define DOT_NODESEP                    "0.8"
+#define DOT_NODESEP                   "0.67" // TODO: maybe number?
 
 #define DOT_HEAD_FILLCOLOR            "#FFFFC0"
 #define DOT_TAIL_FILLCOLOR            "#FFFFC0"
+#define DOT_FREE_HEAD_FILLCOLOR       "#C0C0C0"
 
 #define GLUE_ARROW_WEIGHT             100
-#define DEFAULT_ARROW_WEIGHT          5
+#define DEFAULT_ARROW_WEIGHT          "5" // TODO: use in set_default ...
+
+#define BICONNECT_ARROW_STYLE         "filled"
+#define BICONNECT_ARROW_COLOR         "black"
+
+#define ERROR_ARROW_STYLE             "bold"  
+#define ERROR_ARROW_COLOR             "#FF0000"  

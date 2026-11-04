@@ -4,11 +4,11 @@ typedef enum {
     DUMP_OK = 0,
     DUMP_CANNOT_STRFTIME,
     DUMP_CANNOT_GET_TIME,
-    DUMP_DIRNAME_IS_TOO_LONG,
     DUMP_CANNOT_WRITE_TO_BUFF,
     DUMP_CANNOT_OPEN_DUMPFILE,
     DUMP_CANNOT_MAKE_DIR,
-    DUMP_CANNOT_OPEN_LOG_FILE
+    DUMP_CANNOT_OPEN_LOG_FILE,
+    DUMP_PATH_IS_TOO_LONG
 } DumpStatus;
 
 DumpStatus gen_dbg_dirname(const char *dirname, char *out_buff, size_t max_size);

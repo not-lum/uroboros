@@ -10,9 +10,16 @@ typedef struct {
     const char *color;
 } ArrowStyle;
 
-void init_node(FILE *dot_file, Node *node, ssize_t ind);
+typedef struct {
+    const char *name;
+    const char *label;
+    const char *fillcolor;
+} MetaNode;
+
+void init_node(FILE *dot_file, DList *, ssize_t);
 void highlight_head_and_tail(FILE *dot_file, ssize_t head, ssize_t tail);
-void connect_nodes(FILE *dot_file, ssize_t first, ssize_t second, ArrowStyle *style);
+void highlight_free_head(FILE *, ssize_t);
+void connect_nodes(FILE *dot_file, ssize_t first, ssize_t second, ArrowStyle style);
 void glue_nodes(FILE *dot_file, ssize_t first, ssize_t second);
 void biconnect_nodes(FILE *dot_file, ssize_t first, ssize_t second);
 void connect_nodes_error(FILE *dot_file, ssize_t first, ssize_t second);
