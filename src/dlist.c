@@ -10,7 +10,6 @@
 
 #define ASSERT_OK(dlist, const_msg) do { \
     DListStatus status = dlist_verify((dlist)); \
-    /* TODO: add error handling of dlist_dump_to_html */ \
     DLIST_DUMP_TO_HTML((dlist), (status), "Internal call: " const_msg " func body"); \
     assert(status == DLIST_OK);  \
 } while(0)
