@@ -7,14 +7,16 @@
 #include <assert.h>
 #include <stdbool.h>
 
-ON_DEBUG(
-#define ASSERT_OK(dlist) do { \
+
+#define ASSERT_OK(dlist, const_msg) do { \
     DListStatus status = dlist_verify((dlist)); \
-    dlist_dump_to_html((dlist), status, \
-                       __func__, "Internal call"); \
+    /* TODO: add error handling of dlist_dump_to_html */ \
+    DLIST_DUMP_TO_HTML((dlist), (status), "Internal call: " const_msg " func body"); \
     assert(status == DLIST_OK);  \
 } while(0)
-)
+
+#define ASSERT_OK_BEFORE(dlist) do { ASSERT_OK(dlist, "BEFORE"); } while (0)
+#define ASSERT_OK_AFTER(dlist) do { ASSERT_OK(dlist, "AFTER"); } while (0)
 
 const char *dlist_error_str(DListStatus status) {
     switch (status) {
@@ -57,7 +59,13 @@ const char *dlist_error_str(DListStatus status) {
         case DLIST_FREE_HEAD_LESS_THAN_ZERO:
             return "free_head is less than zero";
         case DLIST_ALLOC_FAIL:
-            return "dlist alloc fail";
+            return "allocation failed";
+        case DLIST_INSERT_AFTER_FREE_ELEM_ATTEMPT:
+            return "attempted to insert after free element";
+        case DLIST_INVALID_CONNECTIVITY:
+            return "invalid nodes connectivity";
+        case DLIST_UNREACHABLE_ELEM_DETECTED:
+            return "unreachable element detected";
         default:
             return "unknown dlist error";
 
@@ -119,7 +127,7 @@ DListStatus dlist_create(DList *dlist, ssize_t capacity
         return DLIST_CANNOT_INIT_LOGS;
     )
 
-    ASSERT_OK(dlist);
+    ASSERT_OK_AFTER(dlist);
 
     return DLIST_OK;
 }
@@ -128,7 +136,7 @@ DListStatus dlist_create(DList *dlist, ssize_t capacity
 DListStatus dlist_destroy(DList *dlist) {
     assert(dlist != NULL);
 
-    ASSERT_OK(dlist);
+    ASSERT_OK_BEFORE(dlist);
 
     ON_DEBUG(
     fclose(dlist->_dbg_logfile);
@@ -155,13 +163,15 @@ DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value,
     assert(dlist != NULL);
     assert(ind < dlist->capacity);
 
-    ASSERT_OK(dlist);
+    ASSERT_OK_BEFORE(dlist);
 
+    if (dlist->data[ind].prev == DLIST_BAD_ELEM)
+        return DLIST_INSERT_AFTER_FREE_ELEM_ATTEMPT;
     if (dlist->size == 0 && ind != 0)
         return DLIST_INDEX_ERROR;
 
     ssize_t new_ind = take_from_free(dlist);
-    if (new_ind == DLIST_BAD_ELEM) // TODO: maybe we should set it to 0
+    if (new_ind == 0) // TODO: add realloc
         return DLIST_IS_FULL;
 
     ssize_t left = dlist->data[ind].prev;
@@ -181,7 +191,39 @@ DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value,
     if (out_ind != NULL)
         *out_ind = new_ind;
 
-    ASSERT_OK(dlist);
+    ASSERT_OK_AFTER(dlist);
+
+    return DLIST_OK;
+}
+
+DListStatus dlist_insert_before(DList *dlist,
+                                ssize_t ind, ssize_t value,
+                                ssize_t *out_ind) {
+    assert(dlist != NULL);
+
+    return dlist_insert_after(dlist, dlist->data[ind].prev, value, out_ind);
+}
+
+
+DListStatus dlist_insert_head(DList *dlist, ssize_t value, ssize_t *out_ind) {
+    assert(dlist != NULL);
+
+    return dlist_insert_after(dlist, 0, value, out_ind);
+}
+
+DListStatus dlist_insert_tail(DList *dlist, ssize_t value, ssize_t *out_ind) {
+    assert(dlist != NULL);
+
+    return dlist_insert_after(dlist, dlist_tail(dlist), value, out_ind);
+}
+
+DListStatus dlist_get(DList *dlist, ssize_t ind, ssize_t *out_value) {
+    assert(dlist != NULL);
+    assert(out_value != NULL);
+
+    ASSERT_OK_BEFORE(dlist);
+
+    *out_value = dlist->data[ind].value;
 
     return DLIST_OK;
 }
@@ -189,7 +231,7 @@ DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value,
 DListStatus dlist_delete(DList *dlist, ssize_t ind) {
     assert(dlist != NULL);
 
-    ASSERT_OK(dlist);
+    ASSERT_OK_BEFORE(dlist);
 
     if (ind == 0)
         return DLIST_ATTEMPTED_TO_DELETE_SERVICE_ELEM;
@@ -207,7 +249,7 @@ DListStatus dlist_delete(DList *dlist, ssize_t ind) {
     dlist->free_head = ind;
     dlist->size--;
 
-    ASSERT_OK(dlist);
+    ASSERT_OK_AFTER(dlist);
 
     return DLIST_OK;
 }

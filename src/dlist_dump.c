@@ -198,14 +198,14 @@ static DumpStatus dlist_dump_html_header(DList *dlist, const char *funcname, con
     assert(dlist != NULL);
 
     char time_str[64] = {};
-    DumpStatus stat = gen_time_str(time_str, "%Y:%m:%d %H:%M:%S", 64);
+    DumpStatus stat = gen_time_str(time_str, "%Y.%m.%d %H:%M:%S", 64);
     if (stat != DUMP_OK)
         return stat;
 
     fprintf(dlist->_dbg_logfile,
             "<h1>%s | Called from <span style=\"color: blue;\">'%s'</span></h1>\n"
             "<hr>\n"
-            "<h2>Message: <i>%s</i></h2>\n", time_str, funcname, msg);
+            "<h2>Message: <i>\"%s\"</i></h2>\n", time_str, funcname, msg);
     
     return DUMP_OK;
 }
@@ -282,6 +282,9 @@ DumpStatus dlist_dump_to_html(DList *dlist, DListStatus status,
     if (stat != DUMP_OK)
         return stat;
 
+    if (status == DLIST_DATA_PTR_IS_NULL)
+        return DUMP_OK;
+
     stat = dlist_to_img(dlist, DLIST_DOTFILE, img_filename);
     if (stat != DUMP_OK)
         return stat;
@@ -291,7 +294,7 @@ DumpStatus dlist_dump_to_html(DList *dlist, DListStatus status,
     fprintf(dlist->_dbg_logfile,
             "<img src=\"../../%s\">\n"
             "<br>\n"
-            "<hr>\n",
+            "<hr>\n\n",
             img_filename);
 
     return DUMP_OK;

@@ -16,6 +16,8 @@ void init_node(FILE *dot_file, DList *dlist, ssize_t ind) {
     if (dlist_verify_prev(dlist, ind) != DLIST_OK ||
         dlist_verify_next(dlist, ind) != DLIST_OK)
         fillcolor = DOT_ERROR_NODE_FILLCOLOR;
+    else if (dlist_check_ind_reachability(dlist, ind, NULL) != DLIST_OK)
+        fillcolor = DOT_UNREACHABLE_NODE_FILLCOLOR;
     else if (ind == 0)
         fillcolor = DOT_SERVICE_NODE_FILLCOLOR;
     else if (node.prev == DLIST_BAD_ELEM)
@@ -32,6 +34,13 @@ void init_node(FILE *dot_file, DList *dlist, ssize_t ind) {
     fprintf(dot_file, "node%zi->ind_node%zi[dir=none];\n", ind, ind); 
 }
 
+
+void change_node_fillcolor(FILE *dot_file, ssize_t ind, const char *fillcolor) {
+    assert(dot_file != NULL);
+    assert(fillcolor != NULL);
+
+    fprintf(dot_file, "node%zi[fillcolor=\"%s\"];\n", ind, fillcolor);
+}
 
 void add_meta_node(FILE *dot_file,
                    ssize_t ind, MetaNode meta_node) {
@@ -169,17 +178,18 @@ void intertwine_nodes(FILE *dot_file, DList *dlist) {
         if (i != dlist->capacity - 1)
             glue_nodes(dot_file, i, i + 1);
     
-        if (node_prev >= 0) {
+        if (node_prev >= 0 && node_prev < dlist->capacity) {
             if (dlist->data[node_prev].next == i)
                 biconnect_nodes(dot_file, i, node_prev);
-            else
+            else {
                 connect_nodes_error(dot_file, i, node_prev);
+            }
         }
 
-        // TODO: add 
-        if (node_next >= 0 && node_prev != DLIST_BAD_ELEM)
-            if (dlist->data[node_next].prev != i)
+        if (node_next >= 0 && node_prev != DLIST_BAD_ELEM && node_next < dlist->capacity)
+            if (dlist->data[node_next].prev != i) {
                 connect_nodes_error(dot_file, i, node_next);
+            }
     }
 }
 

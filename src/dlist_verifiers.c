@@ -59,8 +59,36 @@ DListStatus dlist_verify_linking(DList *dlist) {
     return DLIST_OK;
 }
 
+DListStatus dlist_check_ind_reachability(DList *dlist, ssize_t ind, ssize_t *out_cnt) {
+    if (dlist->data[ind].prev == DLIST_BAD_ELEM)
+        return DLIST_OK;
+
+    ssize_t counter = 0;
+
+    for (ssize_t i = dlist_head(dlist); i != ind; i = dlist->data[i].next) {
+        if (counter > dlist->size) {
+            if (out_cnt != NULL) *out_cnt = counter;
+            return DLIST_UNREACHABLE_ELEM_DETECTED;
+        }
+
+        counter++;
+    }
+
+    if (out_cnt != NULL) *out_cnt = counter;
+    return DLIST_OK;
+}
+
+DListStatus dlist_verify_reachability(DList *dlist) {
+    ssize_t counter = 0;
+    DListStatus status = dlist_check_ind_reachability(dlist, 0, &counter);
+
+    if (status == DLIST_OK && counter < dlist->size)
+        return DLIST_INVALID_CONNECTIVITY;
+    
+    return status;
+}
+
 DListStatus dlist_verify(DList *dlist) {
-    // TODO: add more checks
     if (dlist == NULL)
         return DLIST_PTR_IS_NULL;
 
@@ -84,6 +112,10 @@ DListStatus dlist_verify(DList *dlist) {
         return status;
 
     status = dlist_verify_linking(dlist);
+    if (status != DLIST_OK)
+        return status;
+
+    status = dlist_verify_reachability(dlist);
     if (status != DLIST_OK)
         return status;
 

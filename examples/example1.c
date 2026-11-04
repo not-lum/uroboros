@@ -2,8 +2,6 @@
 #include "../include/dlist_dump.h"
 
 
-#define DOT_FILE "/tmp/dot_test.dot"
-#define OUT_FILE "./logs/img/img.png"
 #define LOGDIR "./logs"
 
 int main() {

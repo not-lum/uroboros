@@ -11,6 +11,8 @@ typedef enum {
     DUMP_PATH_IS_TOO_LONG
 } DumpStatus;
 
+#define DLIST_DUMP_TO_HTML(dlist, status, msg) dlist_dump_to_html((dlist), (status), __func__, (msg))
+
 DumpStatus gen_dbg_dirname(const char *dirname, char *out_buff, size_t max_size);
 DumpStatus init_logs(DList *dlist);
 DumpStatus dlist_to_img(DList *dlist, const char *, const char *);
