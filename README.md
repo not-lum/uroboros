@@ -5,7 +5,7 @@
 
 ![basic dump example](img/example_first.png)
 <details>
-<summary>Ещё примеры дампов</summary>
+<summary><b>Ещё примеры дампов</b></summary>
 <img src="img/example_invalid_connectivity.png">
 
 <img src="img/example_dlist_ok.png">
@@ -22,7 +22,6 @@
 * корректность полей структуры
 
 ## Доступные методы списка
-
 
 * `dlist_create` - конструктор списка
 * `dlist_destroy`- деструктор списка

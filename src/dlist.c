@@ -70,6 +70,8 @@ const char *dlist_error_str(DListStatus status) {
             return "unreachable element detected";
         case DLIST_FREE_ELEM_CHANGE_ATTEMPT:
             return "attempted to change free element";
+        case DLIST_CAPACITY_BIGGER_THAN_MUSABLE:
+            return "capacity is bigger than size allocated for block";
         default:
             return "unknown dlist error";
 

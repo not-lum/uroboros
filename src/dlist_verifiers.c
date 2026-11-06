@@ -1,4 +1,5 @@
 #include "../include/dlist.h"
+#include <malloc.h>
 
 
 DListStatus dlist_verify_prev(DList *dlist, ssize_t ind) {
@@ -107,6 +108,9 @@ DListStatus dlist_verify(DList *dlist) {
 
     if (dlist->free_head < 0)
         return DLIST_FREE_HEAD_LESS_THAN_ZERO;
+
+    if (dlist->capacity * sizeof(Node) > malloc_usable_size(dlist->data))
+        return DLIST_CAPACITY_BIGGER_THAN_MUSABLE;
 
     DListStatus status = dlist_verify_fields(dlist);
     if (status != DLIST_OK)
