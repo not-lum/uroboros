@@ -13,7 +13,7 @@
 #   define DLIST_CREATE_DBG(dlist, capacity, logdir) dlist_create((dlist), (capacity));
 #endif
 
-#define DLIST_BAD_ELEM (ssize_t)-1
+#define DLIST_POISON (ssize_t)-1
 typedef ssize_t dlist_elem_t;
 
 typedef struct {
@@ -49,18 +49,17 @@ typedef enum {
     DLIST_CANNOT_OPEN_DBG_LOG_FILE,
     DLIST_CANNOT_DELETE_UNUSED,
     DLIST_CANNOT_INIT_LOGS,
-    DLIST_ATTEMPTED_TO_DELETE_SERVICE_ELEM,
     DLIST_SIZE_LESS_THAN_ZERO,
     DLIST_CAPACITY_LESS_THAN_ZERO,
     DLIST_PREV_BAD_VALUE,
     DLIST_NEXT_BAD_VALUE,
     DLIST_FREE_HEAD_LESS_THAN_ZERO,
     DLIST_ALLOC_FAIL,
-    DLIST_INSERT_AFTER_FREE_ELEM_ATTEMPT,
     DLIST_UNREACHABLE_ELEM_DETECTED,
     DLIST_INVALID_CONNECTIVITY,
-    DLIST_FREE_ELEM_CHANGE_ATTEMPT,
-    DLIST_CAPACITY_BIGGER_THAN_MUSABLE
+    DLIST_CAPACITY_BIGGER_THAN_MUSABLE,
+    DLIST_SERVICE_ELEM_ACCESS_ATTEMPT,
+    DLIST_FREE_ELEM_ACCESS_ATTEMPT
 } DListStatus;
 
 typedef enum {
@@ -76,26 +75,37 @@ typedef struct {
 } DListErrorInfo;
 
 const char *dlist_error_str(DListStatus status);
-ssize_t dlist_free_head(DList *);
-ssize_t dlist_head(DList *);
-ssize_t dlist_tail(DList *);
+
 DListStatus dlist_create(DList *dlist, ssize_t capacity
                          ON_DEBUG(, const char *));
 DListStatus dlist_destroy(DList *dlist);
 
-DListStatus dlist_get(DList *, ssize_t, ssize_t *);
-DListStatus dlist_insert_tail(DList *, ssize_t, ssize_t *);
-DListStatus dlist_insert_head(DList *, ssize_t, ssize_t *);
+ssize_t dlist_free_head(const DList *);
+ssize_t dlist_head(const DList *);
+ssize_t dlist_tail(const DList *);
+
+DListStatus dlist_get(const DList *, ssize_t, ssize_t *);
+DListStatus dlist_get_next_ind(const DList *, ssize_t, ssize_t *);
+DListStatus dlist_get_prev_ind(const DList *, ssize_t, ssize_t *);
+DListStatus dlist_get_next(const DList *, ssize_t, dlist_elem_t *);
+DListStatus dlist_get_prev(const DList *, ssize_t, dlist_elem_t *);
+
+DListStatus dlist_insert_tail(DList *, dlist_elem_t, ssize_t *);
+DListStatus dlist_insert_head(DList *, dlist_elem_t, ssize_t *);
 DListStatus dlist_insert_before(DList *dlist, ssize_t ind, dlist_elem_t value, ssize_t *);
 DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value, ssize_t *);
+
 DListStatus dlist_delete(DList *dlist, ssize_t ind);
 DListStatus dlist_delete_head(DList *);
 DListStatus dlist_delete_tail(DList *);
-DListStatus dlist_change(DList *, ssize_t, ssize_t);
 
-DListStatus dlist_verify(DList *);
-DListStatus dlist_verify_reachability(DList *);
-DListStatus dlist_check_ind_reachability(DList *, ssize_t, ssize_t *);
-DListStatus dlist_verify_fields(DList *);
-DListStatus dlist_verify_prev(DList *, ssize_t);
-DListStatus dlist_verify_next(DList *, ssize_t);
+DListStatus dlist_change(DList *, ssize_t, dlist_elem_t);
+
+DListStatus dlist_verify_insert_index(const DList *, ssize_t);
+DListStatus dlist_verify_index(const DList *dlist, ssize_t ind);
+DListStatus dlist_verify(const DList *);
+DListStatus dlist_verify_reachability(const DList *);
+DListStatus dlist_check_ind_reachability(const DList *, ssize_t, ssize_t *);
+DListStatus dlist_verify_fields(const DList *);
+DListStatus dlist_verify_prev(const DList *, ssize_t);
+DListStatus dlist_verify_next(const DList *, ssize_t);

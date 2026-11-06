@@ -2,29 +2,46 @@
 #include <malloc.h>
 
 
-DListStatus dlist_verify_prev(DList *dlist, ssize_t ind) {
+DListStatus dlist_verify_insert_index(const DList *dlist, ssize_t ind) {
+    if (ind < 0 || ind >= dlist->capacity)
+        return DLIST_INDEX_ERROR;
+
+    if (dlist->data[ind].prev == DLIST_POISON)
+        return DLIST_FREE_ELEM_ACCESS_ATTEMPT;
+
+    return DLIST_OK;
+}
+
+DListStatus dlist_verify_index(const DList *dlist, ssize_t ind) {
+    if (ind == 0)
+        return DLIST_SERVICE_ELEM_ACCESS_ATTEMPT;
+
+    return dlist_verify_insert_index(dlist, ind);
+}
+
+DListStatus dlist_verify_prev(const DList *dlist, ssize_t ind) {
     ssize_t node_prev = dlist->data[ind].prev;
 
     if (node_prev >= dlist->capacity)
         return DLIST_PREV_BIGGER_THAN_CAPACITY;
-    if (node_prev < 0 && node_prev != DLIST_BAD_ELEM)
+    if (node_prev < 0 && node_prev != DLIST_POISON)
         return DLIST_PREV_BAD_VALUE;
 
     return DLIST_OK;
 }
 
-DListStatus dlist_verify_next(DList *dlist, ssize_t ind) {
+DListStatus dlist_verify_next(const DList *dlist, ssize_t ind) {
     ssize_t node_next = dlist->data[ind].next;
 
     if (node_next >= dlist->capacity)
         return DLIST_NEXT_BIGGER_THAN_CAPACITY;
-    if (node_next < 0 && node_next != DLIST_BAD_ELEM)
+    if (node_next < 0 && node_next != DLIST_POISON)
         return DLIST_NEXT_BAD_VALUE;
 
     return DLIST_OK;
 }
 
-DListStatus dlist_verify_fields(DList *dlist) {
+DListStatus dlist_verify_fields(const DList *dlist) {
     for (ssize_t i = 0; i < dlist->capacity; i++) {
         DListStatus status = dlist_verify_prev(dlist, i);
         if (status != DLIST_OK)
@@ -38,9 +55,9 @@ DListStatus dlist_verify_fields(DList *dlist) {
     return DLIST_OK;
 }
 
-DListStatus dlist_verify_linking(DList *dlist) {
+DListStatus dlist_verify_linking(const DList *dlist) {
     for (ssize_t i = 0; i < dlist->capacity; i++) {
-        if (dlist->data[i].prev == DLIST_BAD_ELEM)
+        if (dlist->data[i].prev == DLIST_POISON)
             continue;
 
         ssize_t node_prev = dlist->data[i].prev;
@@ -50,7 +67,7 @@ DListStatus dlist_verify_linking(DList *dlist) {
             return DLIST_PREV_ELEMENT_DOESNT_LINK_BACK;
         }
 
-        if (node_next != DLIST_BAD_ELEM) {
+        if (node_next != DLIST_POISON) {
             if (dlist->data[node_next].prev != i) {
                 return DLIST_NEXT_ELEMENT_DOESNT_LINK_BACK;
             }
@@ -60,9 +77,8 @@ DListStatus dlist_verify_linking(DList *dlist) {
     return DLIST_OK;
 }
 
-DListStatus dlist_check_ind_reachability(DList *dlist, ssize_t ind, ssize_t *out_cnt) {
-    // TODO: we can identify which nodes are unreachable in only one loop
-    if (dlist->data[ind].prev == DLIST_BAD_ELEM)
+DListStatus dlist_check_ind_reachability(const DList *dlist, ssize_t ind, ssize_t *out_cnt) {
+    if (dlist->data[ind].prev == DLIST_POISON)
         return DLIST_OK;
 
     ssize_t counter = 0;
@@ -80,7 +96,7 @@ DListStatus dlist_check_ind_reachability(DList *dlist, ssize_t ind, ssize_t *out
     return DLIST_OK;
 }
 
-DListStatus dlist_verify_reachability(DList *dlist) {
+DListStatus dlist_verify_reachability(const DList *dlist) {
     ssize_t counter = 0;
     DListStatus status = dlist_check_ind_reachability(dlist, 0, &counter);
 
@@ -90,7 +106,7 @@ DListStatus dlist_verify_reachability(DList *dlist) {
     return status;
 }
 
-DListStatus dlist_verify(DList *dlist) {
+DListStatus dlist_verify(const DList *dlist) {
     if (dlist == NULL)
         return DLIST_PTR_IS_NULL;
 

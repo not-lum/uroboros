@@ -194,6 +194,7 @@ DumpStatus init_logs(DList *dlist) {
 }
 
 static DumpStatus dlist_dump_html_header(DList *dlist, const char *funcname, const char *msg) {
+    ON_DEBUG(
     assert(dlist != NULL);
 
     char time_str[64] = {};
@@ -207,6 +208,7 @@ static DumpStatus dlist_dump_html_header(DList *dlist, const char *funcname, con
             "<h2>Message: <i>\"%s\"</i></h2>\n", time_str, funcname, msg);
     
     return DUMP_OK;
+    )
 }
 
 static void dlist_dump_html_status(DList *dlist, DListStatus status) {

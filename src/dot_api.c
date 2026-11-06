@@ -20,7 +20,7 @@ void init_node(FILE *dot_file, DList *dlist, ssize_t ind) {
         fillcolor = DOT_UNREACHABLE_NODE_FILLCOLOR;
     else if (ind == 0)
         fillcolor = DOT_SERVICE_NODE_FILLCOLOR;
-    else if (node.prev == DLIST_BAD_ELEM)
+    else if (node.prev == DLIST_POISON)
         fillcolor = DOT_FREE_NODE_FILLCOLOR;
 
     fprintf(dot_file, "{ rank=same; node%zi; ind_node%zi; }\n", ind, ind);
@@ -186,7 +186,7 @@ void intertwine_nodes(FILE *dot_file, DList *dlist) {
             }
         }
 
-        if (node_next >= 0 && node_prev != DLIST_BAD_ELEM && node_next < dlist->capacity)
+        if (node_next >= 0 && node_prev != DLIST_POISON && node_next < dlist->capacity)
             if (dlist->data[node_next].prev != i) {
                 connect_nodes_error(dot_file, i, node_next);
             }
