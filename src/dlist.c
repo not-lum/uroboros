@@ -4,6 +4,9 @@
 #include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <malloc.h>
 #include <assert.h>
 #include <stdbool.h>
 
@@ -65,16 +68,19 @@ const char *dlist_error_str(DListStatus status) {
             return "invalid nodes connectivity";
         case DLIST_UNREACHABLE_ELEM_DETECTED:
             return "unreachable element detected";
+        case DLIST_FREE_ELEM_CHANGE_ATTEMPT:
+            return "attempted to change free element";
         default:
             return "unknown dlist error";
 
     }
 }
 
-static void dlist_connect_free_elems(DList *dlist) {
+static void dlist_connect_free_elems(DList *dlist, ssize_t start) {
     assert(dlist != NULL);
 
-    for (ssize_t i = 1; i < dlist->capacity; i++) {
+    for (ssize_t i = start; i < dlist->capacity; i++) {
+        fprintf(stderr, "checking %zi node\n", i);
         dlist->data[i].prev = DLIST_BAD_ELEM;
         if (i != dlist->capacity - 1)
             dlist->data[i].next = i + 1;
@@ -117,7 +123,7 @@ DListStatus dlist_create(DList *dlist, ssize_t capacity
     dlist->capacity = capacity + 1;
 
     dlist->free_head = 1;
-    dlist_connect_free_elems(dlist);
+    dlist_connect_free_elems(dlist, 1);
 
     ON_DEBUG(
     dlist->_dbg_logdir = _dbg_logdir;
@@ -127,6 +133,39 @@ DListStatus dlist_create(DList *dlist, ssize_t capacity
     )
 
     ASSERT_OK_AFTER(dlist);
+
+    return DLIST_OK;
+}
+
+
+static void *recalloc(void *old_ptr, size_t new_size) {
+    assert(old_ptr != NULL);
+
+    size_t old_size = malloc_usable_size(old_ptr);
+
+    void *tmp = realloc(old_ptr, new_size);
+    if (tmp == NULL)
+        return NULL;
+
+    memset(tmp + old_size, 0, new_size - old_size);
+
+    return tmp;
+}
+
+
+static DListStatus dlist_resize(DList *dlist, size_t new_capacity) {
+    assert(dlist != NULL);
+
+    void *tmp = recalloc(dlist->data, new_capacity * sizeof(Node));
+
+    if (tmp == NULL)
+        return DLIST_ALLOC_FAIL;
+
+    dlist->data = tmp;
+    dlist->capacity = new_capacity;
+    dlist->free_head = dlist->size + 1;
+
+    dlist_connect_free_elems(dlist, dlist->size + 1);    
 
     return DLIST_OK;
 }
@@ -170,8 +209,14 @@ DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value,
         return DLIST_INDEX_ERROR;
 
     ssize_t new_ind = take_from_free(dlist);
-    if (new_ind == 0) // TODO: add realloc
-        return DLIST_IS_FULL;
+    if (new_ind == 0) {
+        ssize_t new_capacity = (dlist->capacity - 1) * 2 + 1;
+        DListStatus status = dlist_resize(dlist, new_capacity);
+        if (status != DLIST_OK)
+            return status;
+
+        new_ind = take_from_free(dlist);
+    }
 
     ssize_t left = dlist->data[ind].prev;
     ssize_t right = dlist->data[ind].next;
@@ -227,6 +272,37 @@ DListStatus dlist_get(DList *dlist, ssize_t ind, ssize_t *out_value) {
     return DLIST_OK;
 }
 
+DListStatus dlist_change(DList *dlist, ssize_t ind, ssize_t value) {
+    assert(dlist != NULL);
+    
+    ASSERT_OK_BEFORE(dlist);
+
+    if (ind == 0)
+        return DLIST_ATTEMPTED_TO_DELETE_SERVICE_ELEM;
+
+    if (ind < 0 || ind >= dlist->capacity)
+        return DLIST_INDEX_ERROR;
+
+    if (dlist->data[ind].prev == DLIST_BAD_ELEM)
+        return DLIST_FREE_ELEM_CHANGE_ATTEMPT;
+
+    dlist->data[ind].value = value;
+
+    ASSERT_OK_AFTER(dlist);
+}
+
+DListStatus dlist_delete_head(DList *dlist) {
+    assert(dlist != NULL);
+
+    return dlist_delete(dlist, dlist_head(dlist));
+}
+
+DListStatus dlist_delete_tail(DList *dlist) {
+    assert(dlist != NULL);
+
+    return dlist_delete(dlist, dlist_tail(dlist));
+}
+
 DListStatus dlist_delete(DList *dlist, ssize_t ind) {
     assert(dlist != NULL);
 
@@ -234,6 +310,12 @@ DListStatus dlist_delete(DList *dlist, ssize_t ind) {
 
     if (ind == 0)
         return DLIST_ATTEMPTED_TO_DELETE_SERVICE_ELEM;
+
+    // if (dlist->size - 1 <= dlist->capacity / 4) {
+    //     DListStatus status = dlist_resize(dlist, dlist->capacity / 2);
+    //     if (status != DLIST_OK)
+    //         return status;
+    // }
 
     ssize_t left = dlist->data[ind].prev;
     ssize_t right = dlist->data[ind].next;
@@ -246,6 +328,7 @@ DListStatus dlist_delete(DList *dlist, ssize_t ind) {
     dlist->data[ind].value = DLIST_BAD_ELEM;
 
     dlist->free_head = ind;
+
     dlist->size--;
 
     ASSERT_OK_AFTER(dlist);

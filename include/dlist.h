@@ -58,7 +58,8 @@ typedef enum {
     DLIST_ALLOC_FAIL,
     DLIST_INSERT_AFTER_FREE_ELEM_ATTEMPT,
     DLIST_UNREACHABLE_ELEM_DETECTED,
-    DLIST_INVALID_CONNECTIVITY
+    DLIST_INVALID_CONNECTIVITY,
+    DLIST_FREE_ELEM_CHANGE_ATTEMPT
 } DListStatus;
 
 typedef enum {
@@ -85,8 +86,12 @@ DListStatus dlist_destroy(DList *dlist);
 DListStatus dlist_get(DList *, ssize_t, ssize_t *);
 DListStatus dlist_insert_tail(DList *, ssize_t, ssize_t *);
 DListStatus dlist_insert_head(DList *, ssize_t, ssize_t *);
+DListStatus dlist_insert_before(DList *dlist, ssize_t ind, dlist_elem_t value, ssize_t *);
 DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value, ssize_t *);
 DListStatus dlist_delete(DList *dlist, ssize_t ind);
+DListStatus dlist_delete_head(DList *);
+DListStatus dlist_delete_tail(DList *);
+DListStatus dlist_change(DList *, ssize_t, ssize_t);
 
 DListStatus dlist_verify(DList *);
 DListStatus dlist_verify_reachability(DList *);
