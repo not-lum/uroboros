@@ -210,8 +210,7 @@ DListStatus dlist_insert_after(DList *dlist, ssize_t ind, dlist_elem_t value,
 
     ssize_t new_ind = take_from_free(dlist);
     if (new_ind == 0) {
-        ssize_t new_capacity = (dlist->capacity - 1) * 2 + 1;
-        DListStatus status = dlist_resize(dlist, new_capacity);
+        DListStatus status = dlist_resize(dlist, (dlist->capacity - 1) * 2 + 1);
         if (status != DLIST_OK)
             return status;
 
@@ -289,6 +288,8 @@ DListStatus dlist_change(DList *dlist, ssize_t ind, ssize_t value) {
     dlist->data[ind].value = value;
 
     ASSERT_OK_AFTER(dlist);
+
+    return DLIST_OK;
 }
 
 DListStatus dlist_delete_head(DList *dlist) {
@@ -310,12 +311,6 @@ DListStatus dlist_delete(DList *dlist, ssize_t ind) {
 
     if (ind == 0)
         return DLIST_ATTEMPTED_TO_DELETE_SERVICE_ELEM;
-
-    // if (dlist->size - 1 <= dlist->capacity / 4) {
-    //     DListStatus status = dlist_resize(dlist, dlist->capacity / 2);
-    //     if (status != DLIST_OK)
-    //         return status;
-    // }
 
     ssize_t left = dlist->data[ind].prev;
     ssize_t right = dlist->data[ind].next;

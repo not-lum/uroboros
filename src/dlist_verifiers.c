@@ -60,6 +60,7 @@ DListStatus dlist_verify_linking(DList *dlist) {
 }
 
 DListStatus dlist_check_ind_reachability(DList *dlist, ssize_t ind, ssize_t *out_cnt) {
+    // TODO: we can identify which nodes are unreachable in only one loop
     if (dlist->data[ind].prev == DLIST_BAD_ELEM)
         return DLIST_OK;
 

@@ -76,7 +76,6 @@ DumpStatus gen_img_filename(DList *dlist, char *buff, int max_size) {
     assert(buff != NULL);
     assert(max_size > 0);
 
-    // TODO: this is *kinda* copypaste of unite_paths, but not exactly...
     int len = snprintf(buff, max_size, "%s/img/img_%zu.png",
                        dlist->_dbg_logdir, dlist->_dbg_log_counter);
     if (len >= max_size || len < 0)

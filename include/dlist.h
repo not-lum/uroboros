@@ -78,7 +78,6 @@ const char *dlist_error_str(DListStatus status);
 ssize_t dlist_free_head(DList *);
 ssize_t dlist_head(DList *);
 ssize_t dlist_tail(DList *);
-DListStatus dlist_dump(DList *dlist);
 DListStatus dlist_create(DList *dlist, ssize_t capacity
                          ON_DEBUG(, const char *));
 DListStatus dlist_destroy(DList *dlist);
