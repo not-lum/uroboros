@@ -13,19 +13,19 @@ int main() {
     DList dlist = {};
     DListStatus status = DLIST_CREATE_DBG(&dlist, 4, _dbg_log_dir);
 
-    status = dlist_insert_after(&dlist, 0, 67, NULL);
+    status = dlist_insert_tail(&dlist, 67, NULL);
     if (status != DLIST_OK)
         fprintf(stderr, "DList error: %s\n", dlist_error_str(status));
 
-    status = dlist_insert_after(&dlist, 0, 53, NULL);
+    status = dlist_insert_tail(&dlist, 53, NULL);
     if (status != DLIST_OK)
         fprintf(stderr, "DList error: %s\n", dlist_error_str(status));
 
-    status = dlist_insert_after(&dlist, 1, 189, NULL);
+    status = dlist_insert_tail(&dlist, 189, NULL);
     if (status != DLIST_OK)
         fprintf(stderr, "DList error: %s\n", dlist_error_str(status));
 
-    status = dlist_insert_after(&dlist, 1, 29, NULL);
+    status = dlist_insert_tail(&dlist, 29, NULL);
     if (status != DLIST_OK)
         fprintf(stderr, "DList error: %s\n", dlist_error_str(status));
 

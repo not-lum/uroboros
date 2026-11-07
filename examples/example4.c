@@ -20,10 +20,12 @@ int main() {
             fprintf(stderr, "Error: %s\n", dlist_error_str(status));
     }
     
-    for (ssize_t i = 0; i < 5; i++) {
+    for (ssize_t i = 0; i < 3; i++) {
         status = dlist_delete_tail(&dlist);
         if (status != DLIST_OK)
            fprintf(stderr, "Error: %s\n", dlist_error_str(status));
+
+        dlist.data[1].next = 8; 
     }
 
     dlist_destroy(&dlist);
